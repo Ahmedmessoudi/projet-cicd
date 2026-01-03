@@ -40,9 +40,9 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 echo '📦 Installation des dépendances npm...'
-                bat 'npm --version'
-                bat 'node --version'
-                bat 'npm install'
+                sh 'npm --version'
+                sh 'node --version'
+                sh 'npm install'
             }
         }
         
@@ -52,7 +52,7 @@ pipeline {
         stage('Lint') {
             steps {
                 echo '🔍 Analyse statique du code...'
-                bat 'npm run lint'
+                sh 'npm run lint'
             }
         }
         
@@ -62,7 +62,7 @@ pipeline {
         stage('Test') {
             steps {
                 echo '🧪 Exécution des tests unitaires...'
-                bat 'npm test'
+                sh 'npm test'
             }
             post {
                 always {
@@ -78,10 +78,10 @@ pipeline {
         stage('Build') {
             steps {
                 echo '🏗️ Construction de l\'application...'
-                bat '''
-                    if not exist dist mkdir dist
-                    xcopy /E /Y src\\* dist\\
-                    echo Build version: %BUILD_NUMBER% > dist\\version.txt
+                sh '''
+                    mkdir -p dist
+                    cp -r src/* dist/
+                    echo "Build version: ${BUILD_NUMBER}" > dist/version.txt
                 '''
             }
             post {
