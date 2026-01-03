@@ -1,0 +1,9 @@
+# Inventaire Ansible pour le projet CI/CD
+# Ce fichier définit les serveurs cibles pour le déploiement
+
+[webservers]
+localhost ansible_connection=local
+
+[webservers:vars]
+ansible_python_interpreter=/usr/bin/python3
+deploy_path=/var/www/html/calculatrice

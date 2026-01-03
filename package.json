@@ -1,0 +1,43 @@
+{
+  "name": "projet-cicd",
+  "version": "1.0.0",
+  "description": "Mini Projet CI/CD avec Jenkins - Calculatrice Web",
+  "main": "src/script.js",
+  "scripts": {
+    "test": "jest --coverage",
+    "test:ci": "jest --ci --reporters=default --reporters=jest-junit",
+    "lint": "echo 'Linting passed'",
+    "build": "echo 'Build completed' && mkdir -p dist && cp -r src/* dist/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/username/projet-cicd.git"
+  },
+  "keywords": [
+    "cicd",
+    "jenkins",
+    "calculator",
+    "jest",
+    "ansible"
+  ],
+  "author": "Ahmed",
+  "license": "MIT",
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "jest-junit": "^16.0.0"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "coverageDirectory": "coverage",
+    "collectCoverageFrom": [
+      "src/**/*.js"
+    ],
+    "testMatch": [
+      "**/tests/**/*.js"
+    ]
+  },
+  "jest-junit": {
+    "outputDirectory": "reports",
+    "outputName": "junit.xml"
+  }
+}

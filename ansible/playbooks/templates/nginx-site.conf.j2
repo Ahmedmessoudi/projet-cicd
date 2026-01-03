@@ -1,0 +1,24 @@
+# Configuration Nginx pour l'application Calculatrice
+# Template Jinja2 pour Ansible
+
+server {
+    listen 80;
+    server_name localhost;
+    
+    root {{ deploy_path }};
+    index index.html;
+    
+    location / {
+        try_files $uri $uri/ =404;
+    }
+    
+    # Cache statique
+    location ~* \.(css|js|png|jpg|jpeg|gif|ico)$ {
+        expires 1d;
+        add_header Cache-Control "public, immutable";
+    }
+    
+    # Logs
+    access_log /var/log/nginx/calculatrice_access.log;
+    error_log /var/log/nginx/calculatrice_error.log;
+}

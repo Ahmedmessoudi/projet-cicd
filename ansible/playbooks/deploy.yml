@@ -1,0 +1,83 @@
+---
+# Playbook de déploiement pour la calculatrice
+# Mini Projet CI/CD avec Jenkins
+
+- name: Déployer l'application Calculatrice
+  hosts: webservers
+  become: yes
+  vars:
+    app_name: calculatrice
+    deploy_path: /var/www/html/calculatrice
+    src_path: "{{ playbook_dir }}/../../src"
+
+  tasks:
+    # Installation des prérequis
+    - name: Installer Nginx
+      apt:
+        name: nginx
+        state: present
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+
+    # Créer le répertoire de déploiement
+    - name: Créer le répertoire de déploiement
+      file:
+        path: "{{ deploy_path }}"
+        state: directory
+        mode: '0755'
+        owner: www-data
+        group: www-data
+
+    # Copier les fichiers de l'application
+    - name: Copier index.html
+      copy:
+        src: "{{ src_path }}/index.html"
+        dest: "{{ deploy_path }}/index.html"
+        mode: '0644'
+        owner: www-data
+        group: www-data
+      notify: Redémarrer Nginx
+
+    - name: Copier style.css
+      copy:
+        src: "{{ src_path }}/style.css"
+        dest: "{{ deploy_path }}/style.css"
+        mode: '0644'
+        owner: www-data
+        group: www-data
+
+    - name: Copier script.js
+      copy:
+        src: "{{ src_path }}/script.js"
+        dest: "{{ deploy_path }}/script.js"
+        mode: '0644'
+        owner: www-data
+        group: www-data
+
+    # Configuration Nginx
+    - name: Configurer le site Nginx
+      template:
+        src: templates/nginx-site.conf.j2
+        dest: /etc/nginx/sites-available/{{ app_name }}
+        mode: '0644'
+      notify: Redémarrer Nginx
+
+    - name: Activer le site Nginx
+      file:
+        src: /etc/nginx/sites-available/{{ app_name }}
+        dest: /etc/nginx/sites-enabled/{{ app_name }}
+        state: link
+      notify: Redémarrer Nginx
+
+    # S'assurer que Nginx est démarré
+    - name: Démarrer et activer Nginx
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+
+  handlers:
+    - name: Redémarrer Nginx
+      service:
+        name: nginx
+        state: reloaded

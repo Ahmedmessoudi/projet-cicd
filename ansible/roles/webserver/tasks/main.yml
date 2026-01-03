@@ -1,0 +1,31 @@
+---
+# Rôle webserver - Installation et configuration du serveur web
+# Fichier principal des tâches
+
+- name: Mettre à jour le cache apt
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  when: ansible_os_family == "Debian"
+
+- name: Installer les paquets requis
+  apt:
+    name:
+      - nginx
+      - curl
+    state: present
+  when: ansible_os_family == "Debian"
+
+- name: Créer le répertoire du site
+  file:
+    path: "{{ web_root | default('/var/www/html') }}"
+    state: directory
+    mode: '0755'
+    owner: www-data
+    group: www-data
+
+- name: S'assurer que Nginx est démarré
+  service:
+    name: nginx
+    state: started
+    enabled: yes
