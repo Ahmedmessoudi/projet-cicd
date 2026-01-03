@@ -10,6 +10,8 @@ pipeline {
         APP_NAME = 'calculatrice-cicd'
         GIT_REPO = 'https://github.com/Ahmedmessoudi/projet-cicd.git'
         GIT_BRANCH = 'main'
+        NODE_HOME = '/usr/local'
+        PATH = "${NODE_HOME}/bin:${env.PATH}"
     }
     
     // Options du pipeline
@@ -35,45 +37,89 @@ pipeline {
         }
         
         // ============================================
-        // Stage 2: Installation des dépendances
+        // Stage 2: Installation de Node.js
+        // ============================================
+        stage('Setup Node.js') {
+            steps {
+                echo '🔧 Installation de Node.js...'
+                sh '''
+                    # Vérifier si Node.js est déjà installé
+                    if ! command -v node &> /dev/null; then
+                        echo "Installation de Node.js..."
+                        curl -fsSL https://deb.nodesource.com/setup_18.x | bash - || true
+                        apt-get install -y nodejs || true
+                        
+                        # Alternative: Installation via nvm si apt ne fonctionne pas
+                        if ! command -v node &> /dev/null; then
+                            echo "Tentative avec installation manuelle..."
+                            curl -fsSL https://nodejs.org/dist/v18.19.0/node-v18.19.0-linux-x64.tar.xz -o node.tar.xz
+                            tar -xf node.tar.xz
+                            export PATH=$PWD/node-v18.19.0-linux-x64/bin:$PATH
+                            echo "Node installé: $(node --version)"
+                        fi
+                    else
+                        echo "Node.js déjà installé: $(node --version)"
+                    fi
+                    
+                    node --version || echo "Node.js non disponible"
+                    npm --version || echo "npm non disponible"
+                '''
+            }
+        }
+        
+        // ============================================
+        // Stage 3: Installation des dépendances
         // ============================================
         stage('Install Dependencies') {
             steps {
                 echo '📦 Installation des dépendances npm...'
-                sh 'npm --version'
-                sh 'node --version'
-                sh 'npm install'
+                sh '''
+                    # Utiliser Node.js local si installé dans le workspace
+                    if [ -d "node-v18.19.0-linux-x64" ]; then
+                        export PATH=$PWD/node-v18.19.0-linux-x64/bin:$PATH
+                    fi
+                    npm install
+                '''
             }
         }
         
         // ============================================
-        // Stage 3: Linting (Analyse statique)
+        // Stage 4: Linting (Analyse statique)
         // ============================================
         stage('Lint') {
             steps {
                 echo '🔍 Analyse statique du code...'
-                sh 'npm run lint'
+                sh '''
+                    if [ -d "node-v18.19.0-linux-x64" ]; then
+                        export PATH=$PWD/node-v18.19.0-linux-x64/bin:$PATH
+                    fi
+                    npm run lint
+                '''
             }
         }
         
         // ============================================
-        // Stage 4: Exécution des tests
+        // Stage 5: Exécution des tests
         // ============================================
         stage('Test') {
             steps {
                 echo '🧪 Exécution des tests unitaires...'
-                sh 'npm test'
+                sh '''
+                    if [ -d "node-v18.19.0-linux-x64" ]; then
+                        export PATH=$PWD/node-v18.19.0-linux-x64/bin:$PATH
+                    fi
+                    npm test
+                '''
             }
             post {
                 always {
-                    // Publication des rapports de test JUnit
                     junit allowEmptyResults: true, testResults: 'reports/junit.xml'
                 }
             }
         }
         
         // ============================================
-        // Stage 5: Build (Création de l'artifact)
+        // Stage 6: Build (Création de l'artifact)
         // ============================================
         stage('Build') {
             steps {
@@ -86,14 +132,13 @@ pipeline {
             }
             post {
                 success {
-                    // Archiver l'artifact
                     archiveArtifacts artifacts: 'dist/**/*', fingerprint: true
                 }
             }
         }
         
         // ============================================
-        // Stage 6: Déploiement
+        // Stage 7: Déploiement
         // ============================================
         stage('Deploy') {
             steps {
