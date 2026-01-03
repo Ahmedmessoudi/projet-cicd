@@ -1,5 +1,6 @@
 // Jenkinsfile - Pipeline CI/CD pour le projet Calculatrice
 // Mini Projet CI/CD avec Jenkins
+// GitHub: https://github.com/Ahmedmessoudi/projet-cicd.git
 
 pipeline {
     agent any
@@ -9,6 +10,8 @@ pipeline {
         NODE_VERSION = '18'
         APP_NAME = 'calculatrice-cicd'
         DEPLOY_PATH = '/var/www/html/calculatrice'
+        GIT_REPO = 'https://github.com/Ahmedmessoudi/projet-cicd.git'
+        GIT_BRANCH = 'main'
     }
     
     // Outils requis
@@ -31,7 +34,10 @@ pipeline {
         stage('Checkout') {
             steps {
                 echo '📥 Récupération du code source...'
-                checkout scm
+                git branch: "${GIT_BRANCH}",
+                    credentialsId: 'git-credentials',
+                    url: "${GIT_REPO}"
+                echo 'Dépôt cloné avec succès !'
                 
                 script {
                     // Afficher les informations du commit
@@ -92,7 +98,7 @@ pipeline {
             }
             post {
                 always {
-                    // Publication des rapports de test
+                    // Publication des rapports de test JUnit
                     junit allowEmptyResults: true, testResults: 'reports/junit.xml'
                     
                     // Publication de la couverture de code
@@ -127,6 +133,7 @@ pipeline {
                             if not exist dist mkdir dist
                             xcopy /E /Y src\\* dist\\
                             echo Build version: %BUILD_NUMBER% > dist\\version.txt
+                            echo Build date: %DATE% %TIME% >> dist\\version.txt
                         '''
                     }
                 }
@@ -173,13 +180,9 @@ pipeline {
     post {
         success {
             echo '✅ Pipeline exécuté avec succès!'
-            // Notification optionnelle
-            // slackSend(color: 'good', message: "Build ${env.BUILD_NUMBER} réussi!")
         }
         failure {
             echo '❌ Le pipeline a échoué.'
-            // Notification optionnelle
-            // slackSend(color: 'danger', message: "Build ${env.BUILD_NUMBER} échoué!")
         }
         always {
             echo '🧹 Nettoyage...'
